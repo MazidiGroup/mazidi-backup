@@ -11,11 +11,39 @@ export const dynamic = 'force-dynamic';
 // Campaign one: local accountancy and bookkeeping practices.
 const CAMPAIGN_SIC = ['69201', '69202', '69203'];
 
+/**
+ * Cron authorisation.
+ *
+ * Both sides are trimmed: a trailing newline pasted into the environment
+ * variable field is invisible and would otherwise fail silently forever.
+ * The failure reason is returned so a 401 is diagnosable, but it never
+ * echoes the secret or any part of it.
+ */
 function authorised(request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const header = request.headers.get('authorization') || '';
-  return header === `Bearer ${secret}`;
+  const secret = (process.env.CRON_SECRET || '').trim();
+  if (!secret) {
+    return { ok: false, reason: 'CRON_SECRET is not set on this deployment' };
+  }
+
+  const header = (request.headers.get('authorization') || '').trim();
+  if (!header) {
+    return { ok: false, reason: 'No Authorization header was sent' };
+  }
+  if (!/^Bearer\s/i.test(header)) {
+    return { ok: false, reason: 'Authorization header must be of the form: Bearer <CRON_SECRET>' };
+  }
+
+  const supplied = header.replace(/^Bearer\s+/i, '').trim();
+  if (supplied === secret) return { ok: true };
+
+  return {
+    ok: false,
+    reason: 'Bearer token did not match CRON_SECRET',
+    hint: supplied.length === secret.length
+      ? 'Lengths match, so the characters differ — check for a copy/paste slip.'
+      : `Length mismatch: sent ${supplied.length} characters, expected ${secret.length}. ` +
+        'A trailing newline or a truncated paste is the usual cause.'
+  };
 }
 
 async function config(db, keys) {
@@ -24,8 +52,12 @@ async function config(db, keys) {
 }
 
 export async function GET(request) {
-  if (!authorised(request)) {
-    return Response.json({ error: 'Unauthorised' }, { status: 401 });
+  const auth = authorised(request);
+  if (!auth.ok) {
+    return Response.json(
+      { error: 'Unauthorised', reason: auth.reason, ...(auth.hint ? { hint: auth.hint } : {}) },
+      { status: 401 }
+    );
   }
 
   const url = new URL(request.url);
