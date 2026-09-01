@@ -1,12 +1,12 @@
 import LeadForm from '../../components/LeadForm';
 import { business } from '../../lib/config';
 
-export const metadata = { title: 'Contact' };
+export const metadata = { title: 'Book a free backup check' };
 
 export default function Contact() {
   return (
     <>
-      <div className="hero">
+      <div className="hero compact">
         <div className="wrap">
           <h1>Book a free backup check</h1>
           <p className="lede">
@@ -16,20 +16,27 @@ export default function Contact() {
         </div>
       </div>
 
-      <section className="wrap">
-        <div className="grid" style={{ gridTemplateColumns: 'minmax(300px,1.4fr) minmax(240px,1fr)' }}>
-          <div>
-            <LeadForm source="contact" />
-          </div>
-          <div className="card" style={{ alignSelf: 'start' }}>
-            <h3>Prefer to call?</h3>
-            <p>
-              <a href={`tel:${business.phone.replace(/\s/g, '')}`}>{business.phone}</a><br />
-              <a href={`mailto:${business.email}`}>{business.email}</a>
-            </p>
-            <p className="hint">{business.hours}</p>
-            <h3>Service area</h3>
-            <p className="hint">{business.serviceArea}</p>
+      <section>
+        <div className="wrap">
+          <div className="contact-grid">
+            <div>
+              <LeadForm source="contact" />
+            </div>
+            <aside className="aside">
+              <h3>Prefer to call?</h3>
+              <p>
+                <a href={`tel:${business.phone.replace(/\s/g, '')}`}>{business.phone}</a><br />
+                <a href={`mailto:${business.email}`}>{business.email}</a><br />
+                <span className="small">{business.hours}</span>
+              </p>
+              <h3>What happens next</h3>
+              <p className="small">
+                We reply within one working day to arrange a time. The check is free, there is no
+                obligation, and if what you have is sound we will say so.
+              </p>
+              <h3>Service area</h3>
+              <p className="small">{business.serviceArea}.</p>
+            </aside>
           </div>
         </div>
       </section>

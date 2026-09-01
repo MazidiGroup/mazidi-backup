@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64" role="img" aria-label="Mazidi Group">
+  <style>text{font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}</style>
+  <g transform="translate(0 8)">
+    <rect x="15" y="4.5" width="28.5" height="28.5" rx="7.5" fill="none" stroke="#1d7250" stroke-width="3.6"/>
+    <rect x="4.5" y="15" width="28.5" height="28.5" rx="7.5" fill="#16233a"/>
+  </g>
+  <text x="64" y="34" font-size="27" font-weight="700" fill="#16233a" letter-spacing="-0.6">Mazidi Group</text>
+  <text x="64" y="52" font-size="12.5" font-weight="500" fill="#6e7a8c">Business backup and recovery</text>
+</svg>

@@ -35,36 +35,50 @@ export default function LeadForm({ source = 'contact' }) {
         <input id="website_url" name="website_url" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <label htmlFor="name">Your name *</label>
-      <input id="name" name="name" required maxLength={120} autoComplete="name" />
+      <div className="two">
+        <div className="field">
+          <label htmlFor="name">Your name</label>
+          <input id="name" name="name" required maxLength={120} autoComplete="name" />
+        </div>
+        <div className="field">
+          <label htmlFor="company_name">Company</label>
+          <input id="company_name" name="company_name" maxLength={160} autoComplete="organization" />
+        </div>
+      </div>
 
-      <label htmlFor="company_name">Company</label>
-      <input id="company_name" name="company_name" maxLength={160} autoComplete="organization" />
+      <div className="two">
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input id="email" name="email" type="email" required maxLength={200} autoComplete="email" />
+        </div>
+        <div className="field">
+          <label htmlFor="phone">Phone <span className="small" style={{ fontWeight: 400 }}>(optional)</span></label>
+          <input id="phone" name="phone" type="tel" maxLength={40} autoComplete="tel" />
+        </div>
+      </div>
 
-      <label htmlFor="email">Email *</label>
-      <input id="email" name="email" type="email" required maxLength={200} autoComplete="email" />
+      <div className="field">
+        <label htmlFor="pc_count">Roughly how many computers?</label>
+        <input id="pc_count" name="pc_count" type="number" min="1" max="500" inputMode="numeric" style={{ maxWidth: 160 }} />
+      </div>
 
-      <label htmlFor="phone">Phone (optional)</label>
-      <input id="phone" name="phone" type="tel" maxLength={40} autoComplete="tel" />
-
-      <label htmlFor="pc_count">Roughly how many computers?</label>
-      <input id="pc_count" name="pc_count" type="number" min="1" max="500" inputMode="numeric" />
-
-      <label htmlFor="message">What would you like to ask?</label>
-      <textarea id="message" name="message" rows={5} maxLength={4000} />
+      <div className="field">
+        <label htmlFor="message">What would you like to ask?</label>
+        <textarea id="message" name="message" rows={5} maxLength={4000} />
+      </div>
 
       <p className="hint">
         We use these details only to answer your enquiry. See our{' '}
         <a href="/privacy">privacy notice</a>.
       </p>
 
-      <p style={{ marginTop: '20px' }}>
+      <div className="btn-row mt-2">
         <button className="btn" type="submit" disabled={state.status === 'sending'}>
           {state.status === 'sending' ? 'Sending…' : 'Send enquiry'}
         </button>
-      </p>
+      </div>
 
-      {state.status === 'error' && <p className="err">{state.message}</p>}
+      {state.status === 'error' && <p className="err mt-1">{state.message}</p>}
     </form>
   );
 }

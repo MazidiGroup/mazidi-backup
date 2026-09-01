@@ -5,19 +5,19 @@ export const metadata = { title: 'Privacy notice' };
 export default function Privacy() {
   return (
     <>
-      <div className="hero">
+      <div className="hero compact">
         <div className="wrap">
           <h1>Privacy notice</h1>
           <p className="lede">How {business.companyName} handles personal information.</p>
         </div>
       </div>
 
-      <section className="wrap">
-        <div className="note">
-          <strong>Owner action required.</strong> This is a working draft covering the processing
-          this system actually performs. It has not been reviewed by a solicitor. Have it checked
-          before the site goes live, and register with the ICO if required.
-        </div>
+      <section>
+        <div className="wrap">
+          <div className="prose">
+        {/* NOTE FOR OWNER: this notice is a working draft covering the processing the
+            system actually performs. It has not been reviewed by a solicitor. Independent
+            review is still outstanding (see HANDOVER.md, section 4). */}
 
         <h2>Who we are</h2>
         <p>
@@ -93,6 +93,8 @@ export default function Privacy() {
           Information Commissioner&apos;s Office at ico.org.uk, though we would like the chance to
           put it right first.
         </p>
+          </div>
+        </div>
       </section>
     </>
   );
