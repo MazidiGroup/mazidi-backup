@@ -131,6 +131,14 @@ const cases = [
     placesChecked:true, placesFound:true, placesBusinessStatus:'OPERATIONAL',
     placesRatingCount:13, placesLatestReviewAt:'2018-06-01'
   }, 'MUST NOT QUALIFY'],
+  ['One review from 3 years ago is not a stale listing', {
+    sicCodes:['69201'], employeeBand:'10-50', companyStatus:'active',
+    subscriberStatus:'CORPORATE_LIMITED', distanceMiles:10, websiteConfirmed:true,
+    namedPeopleCount:4, mentionsInternalIT:false,
+    incorporationDate:'2014-09-22', lastConfirmationMadeUpTo:'2025-09-22',
+    placesChecked:true, placesFound:true, placesBusinessStatus:'OPERATIONAL',
+    placesRatingCount:1, placesLatestReviewAt:'2023-03-15'
+  }, 'QUALIFY'],
 ];
 
 const T = 65;
