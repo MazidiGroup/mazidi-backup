@@ -149,7 +149,8 @@ export async function GET(request) {
         placesChecked: places.checked && !places.error,
         placesFound: Boolean(places.found),
         placesBusinessStatus: places.businessStatus ?? null,
-        placesRatingCount: places.ratingCount ?? 0
+        placesRatingCount: places.ratingCount ?? 0,
+        placesLatestReviewAt: places.latestReviewAt ?? null
       };
 
       // Cheap gates first, so we do not fetch websites for companies that
@@ -206,7 +207,7 @@ export async function GET(request) {
                : 'No website could be confirmed. Needs a manual look before any contact.',
           `Last confirmation statement made up to ${profile.lastConfirmationMadeUpTo ?? 'none on file'}; last accounts to ${profile.lastAccountsMadeUpTo ?? 'none on file'} (${profile.accountsCategory ?? 'unknown category'}).`,
           places.checked
-            ? (places.found ? `Google lists it as ${places.businessStatus ?? 'unknown status'} with ${places.ratingCount} reviews (${places.sourceUrl}).`
+            ? (places.found ? `Google lists it as ${places.businessStatus ?? 'unknown status'} with ${places.ratingCount} reviews, newest ${places.latestReviewAt ?? 'n/a'} (${places.sourceUrl}).`
                             : places.error ? `Google Places check failed: ${places.error}.` : 'No Google Business listing found.')
             : 'Google Places not checked.'
         ].join(' '),
@@ -227,7 +228,7 @@ export async function GET(request) {
         status: row.pipeline_status, needsReview: !site,
         domain: row.domain, distance: row.distance_miles, city: row.city,
         incorporated: row.incorporation_date, lastConfirmation: profile.lastConfirmationMadeUpTo,
-        google: places.checked ? (places.found ? `${places.businessStatus ?? '?'}, ${places.ratingCount} reviews` : 'not listed') : 'not checked',
+        google: places.checked ? (places.found ? `${places.businessStatus ?? '?'}, ${places.ratingCount} reviews, newest ${places.latestReviewAt ?? 'n/a'}` : 'not listed') : 'not checked',
         companiesHouse: row.source_url, reason: row.lead_reason
       });
       report.wouldWrite++;

@@ -1,4 +1,16 @@
 const { scoreCompany, exclusions, sectorFromSic } = await import('../lib/scoring.js');
+const { candidateDomains } = await import('../lib/research.js');
+
+// Website matching: a name with no distinctive word may only match on postcode.
+{
+  const cc = candidateDomains('C & C ACCOUNTANTS LTD.');
+  const allWeak = cc.length > 0 && cc.every(c => c.weak);
+  const hs = candidateDomains('HANSEN SWEENEY LIMITED');
+  const hasStrong = hs.some(c => !c.weak && c.domain === 'hansensweeney.co.uk');
+  console.log(`${allWeak ? 'PASS' : '*** FAIL ***'}  generic name "C & C Accountants" yields postcode-only candidates`);
+  console.log(`${hasStrong ? 'PASS' : '*** FAIL ***'}  distinctive name "Hansen Sweeney" yields a strong candidate`);
+  if (!allWeak || !hasStrong) process.exit(1);
+}
 const NOW = Date.parse('2026-09-01T12:00:00Z');
 
 const cases = [
@@ -111,6 +123,13 @@ const cases = [
     subscriberStatus:'CORPORATE_LIMITED', distanceMiles:3, websiteConfirmed:false,
     incorporationDate:'2020-01-01', lastConfirmationMadeUpTo:'2026-03-01',
     placesChecked:true, placesFound:false
+  }, 'MUST NOT QUALIFY'],
+  ['Listing with 13 reviews but the newest is 8 years old', {
+    sicCodes:['69201'], employeeBand:'1-10', companyStatus:'active',
+    subscriberStatus:'CORPORATE_LIMITED', distanceMiles:7, websiteConfirmed:false,
+    incorporationDate:'2013-12-03', lastConfirmationMadeUpTo:'2025-10-22',
+    placesChecked:true, placesFound:true, placesBusinessStatus:'OPERATIONAL',
+    placesRatingCount:13, placesLatestReviewAt:'2018-06-01'
   }, 'MUST NOT QUALIFY'],
 ];
 
