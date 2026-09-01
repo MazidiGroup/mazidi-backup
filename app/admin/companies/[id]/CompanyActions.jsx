@@ -1,6 +1,6 @@
 'use client';
 import { useActionState } from 'react';
-import { setWebsite, setStatus, addNote } from '../../actions';
+import { setWebsite, setStatus, addNote, addContact } from '../../actions';
 
 function Msg({ state }) {
   if (!state) return null;
@@ -13,6 +13,7 @@ export default function CompanyActions({ company }) {
   const [w, wAct, wPend] = useActionState(setWebsite, null);
   const [s, sAct, sPend] = useActionState(setStatus, null);
   const [n, nAct, nPend] = useActionState(addNote, null);
+  const [c, cAct, cPend] = useActionState(addContact, null);
   return (
     <div className="cards">
       <div className="card">
@@ -49,6 +50,26 @@ export default function CompanyActions({ company }) {
           </div>
           <button className="btn secondary" type="submit" disabled={sPend}>{sPend ? 'Saving…' : 'Save decision'}</button>
           <Msg state={s} />
+        </form>
+      </div>
+
+      <div className="card">
+        <h3>Add a contact by hand</h3>
+        <form action={cAct}>
+          <input type="hidden" name="company_id" value={company.company_id} />
+          <div className="two">
+            <div className="field"><label htmlFor="first_name">First name</label><input id="first_name" name="first_name" /></div>
+            <div className="field"><label htmlFor="surname">Surname</label><input id="surname" name="surname" /></div>
+          </div>
+          <div className="field"><label htmlFor="job_title">Role</label><input id="job_title" name="job_title" placeholder="Director" /></div>
+          <div className="field"><label htmlFor="email">Email address</label><input id="email" name="email" type="email" required /></div>
+          <div className="field">
+            <label htmlFor="source_url">Where you found it</label>
+            <input id="source_url" name="source_url" type="url" required placeholder="https://" />
+            <p className="hint">Required. The page that shows this address — their contact page, a directory listing, a letterhead you were sent.</p>
+          </div>
+          <button className="btn secondary" type="submit" disabled={cPend}>{cPend ? 'Saving…' : 'Record contact'}</button>
+          <Msg state={c} />
         </form>
       </div>
 

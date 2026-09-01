@@ -91,3 +91,44 @@ export async function addNote(prev, formData) {
   revalidatePath(`/admin/companies/${id}`);
   return { ok: 'Note saved.' };
 }
+
+const ROLE_LOCALPARTS = new Set(['info','office','admin','enquiries','enquiry','hello','contact','accounts','reception','mail','support','partners','team']);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * Owner adds a contact by hand. The source URL is mandatory: a contact with
+ * no evidence of where it came from is exactly what the rules forbid.
+ */
+export async function addContact(prev, formData) {
+  const db = await guard();
+  const id = formData.get('company_id');
+  const c = await company(db, id);
+  const email = String(formData.get('email') || '').trim().toLowerCase();
+  const source = String(formData.get('source_url') || '').trim();
+  const first = String(formData.get('first_name') || '').trim().slice(0, 80) || null;
+  const last = String(formData.get('surname') || '').trim().slice(0, 80) || null;
+  const title = String(formData.get('job_title') || '').trim().slice(0, 80) || null;
+
+  if (!EMAIL_RE.test(email)) return { error: 'That email address does not look valid.' };
+  let src;
+  try { src = new URL(source); if (!/^https?:$/.test(src.protocol)) throw 0; } catch { return { error: 'Enter the full web address where you found this contact (starting https://).' }; }
+  if (c.domain && !email.endsWith('@' + c.domain) && !email.endsWith('.' + c.domain)) {
+    return { error: `The address must be on the company's own domain (${c.domain}).` };
+  }
+  const named = Boolean(first || last);
+  const local = email.split('@')[0].replace(/[^a-z]/g, '');
+  const row = {
+    company_id: c.company_id, first_name: first, surname: last, job_title: title, email,
+    email_type: ROLE_LOCALPARTS.has(local) ? 'ROLE' : 'NAMED',
+    source_url: src.href, verification_status: 'UNVERIFIED',
+    lawful_basis: named ? 'LEGITIMATE_INTERESTS' : 'NOT_APPLICABLE_CORPORATE_ONLY',
+    lia_reference: named ? 'LIA-2026-01' : null,
+    notes: `Added by owner from ${src.href}.`
+  };
+  const { error } = await db.from('contacts').insert(row);
+  if (error) return { error: error.message };
+  await db.from('companies').update({ notes: (c.notes || '').replace(/NEEDS_REVIEW: no contact address[^\n]*\n?/g, '').trim() || null }).eq('company_id', id);
+  await log(db, 'CONTACT_ADDED_BY_OWNER', c, { email, email_type: row.email_type, source_url: src.href, named }, 'recorded');
+  revalidatePath(`/admin/companies/${id}`); revalidatePath('/admin/companies'); revalidatePath('/admin');
+  return { ok: `Contact ${email} recorded (${row.email_type.toLowerCase()} address, unverified).` };
+}

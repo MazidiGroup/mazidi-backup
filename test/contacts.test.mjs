@@ -17,5 +17,19 @@ check(people.length === 2, `only active natural-person directors kept (${people.
 check(people[0].surname === "O'Brien" && people[0].firstName === 'Mary', 'longest-serving first, name cased, first forename only');
 check(people[1].firstName === 'Aimal' && people[1].surname === 'Mazidi' && people[1].role === 'Director', 'register name parsed');
 
+
+const { collectAddresses } = await import('../lib/contacts.js');
+globalThis.fetch = async (url) => ({
+  ok: true, status: 200, url: String(url), headers: { get: () => 'text/html' },
+  text: async () => String(url).endsWith('/get-in-touch')
+    ? '<p>Email us: <a href="/cdn-cgi/l/email-protection" data-cfemail="a9c0c7cfc6e9cfc0dbc487cac687dcc2">[email protected]</a> or hello [at] firm dot co dot uk</p>'
+    : '<a href="/get-in-touch">Get in touch</a><a href="/blog">Blog</a>'
+});
+const r = await collectAddresses('https://firm.co.uk', 'firm.co.uk');
+const emails = r.found.map(a => a.email).sort();
+check(emails.includes('info@firm.co.uk'), `Cloudflare-obfuscated address decoded (${emails.join(', ')})`);
+check(emails.includes('hello@firm.co.uk'), '"[at] ... dot" spelling decoded');
+check(r.found.every(a => a.sourceUrl.endsWith('/get-in-touch')), 'contact link discovered from the homepage and used as source');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
