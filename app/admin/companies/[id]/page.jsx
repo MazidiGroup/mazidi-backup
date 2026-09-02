@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { isSignedIn } from '../../../../lib/adminAuth';
 import { companyDetail } from '../../../../lib/admin';
 import CompanyActions from './CompanyActions';
+import ReverifyButton from './ReverifyButton';
 
 export const metadata = { title: 'Company' };
 const when = iso => new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -60,7 +61,7 @@ export default async function Company({ params }) {
             {contacts.map(p => (
               <tr key={p.contact_id}>
                 <td>{[p.first_name, p.surname].filter(Boolean).join(' ') || '—'}{p.objected && <span className="tag x" style={{ marginLeft: 8 }}>objected</span>}</td>
-                <td>{p.job_title ?? '—'}</td><td>{p.email}</td><td>{p.verification_status ?? '—'}</td>
+                <td>{p.job_title ?? '—'}</td><td>{p.email}</td><td><span className={`tag ${['VALID','CATCH_ALL'].includes(p.verification_status) ? 'q' : p.verification_status === 'INVALID' ? 'x' : 'r'}`}>{p.verification_status ?? '—'}</span> <ReverifyButton contactId={p.contact_id} /></td>
                 <td>{p.source_url ? <a href={p.source_url} target="_blank" rel="noreferrer">link</a> : '—'}</td>
               </tr>
             ))}

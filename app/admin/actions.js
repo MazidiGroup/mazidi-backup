@@ -132,3 +132,16 @@ export async function addContact(prev, formData) {
   revalidatePath(`/admin/companies/${id}`); revalidatePath('/admin/companies'); revalidatePath('/admin');
   return { ok: `Contact ${email} recorded (${row.email_type.toLowerCase()} address, unverified).` };
 }
+
+/** Put a contact back in the verification queue (e.g. after the owner has checked the address). */
+export async function reverifyContact(prev, formData) {
+  const db = await guard();
+  const contactId = formData.get('contact_id');
+  const { data: ct } = await db.from('contacts').select('contact_id, company_id, email').eq('contact_id', contactId).single();
+  if (!ct) return { error: 'Contact not found.' };
+  const { error } = await db.from('contacts').update({ verification_status: 'UNVERIFIED', hard_bounced: false }).eq('contact_id', contactId);
+  if (error) return { error: error.message };
+  await db.from('activity_log').insert({ actor: ACTOR, action: 'REVERIFY_REQUESTED', entity_type: 'contacts', entity_id: ct.contact_id, company_id: ct.company_id, detail: { email: ct.email }, outcome: 'queued' });
+  revalidatePath(`/admin/companies/${ct.company_id}`);
+  return { ok: `${ct.email} will be re-checked on the next verification run (07:45 weekdays).` };
+}

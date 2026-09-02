@@ -59,7 +59,9 @@ export async function GET(request) {
         report.needsReview++;
         if (!dryRun) {
           const note = `NEEDS_REVIEW: no contact address — ${r.why}`;
-          await db.from('companies').update({ notes: [c.notes, note].filter(Boolean).join('\n') }).eq('company_id', c.company_id);
+          if (!(c.notes || '').includes(note)) {
+            await db.from('companies').update({ notes: [c.notes, note].filter(Boolean).join('\n') }).eq('company_id', c.company_id);
+          }
           await db.from('activity_log').insert({
             actor: 'SYSTEM:contact-discovery', action: 'CONTACT_NOT_FOUND', entity_type: 'companies', company_id: c.company_id,
             detail: { officers: r.officersFound, addresses: r.addressesFound, pages_read: r.pagesRead }, outcome: r.why

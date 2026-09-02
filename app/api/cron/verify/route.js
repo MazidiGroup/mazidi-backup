@@ -46,9 +46,17 @@ export async function GET(request) {
     const now = new Date().toISOString();
     const patch = { verification_status: r.result, last_verified: now };
     if (r.result === 'VALID' || r.result === 'CATCH_ALL') patch.verified_at = now;
-    if (r.result === 'INVALID') patch.hard_bounced = true; // never attempt an address that does not exist
+    // INVALID blocks sending through send_blockers() but is not a bounce, so it
+    // is not permanent: the owner may find a better address or re-verify.
     const { error } = await db.from('contacts').update(patch).eq('contact_id', c.contact_id);
     if (error) { report.errors.push(`${c.email}: ${error.message}`); continue; }
+    if (r.result === 'INVALID') {
+      const { data: co } = await db.from('companies').select('notes').eq('company_id', c.company_id).single();
+      const note = `NEEDS_REVIEW: published address ${c.email} failed verification (${r.why}). Find another address or mark not a prospect.`;
+      if (!(co?.notes || '').includes(note)) {
+        await db.from('companies').update({ notes: [co?.notes, note].filter(Boolean).join('\n') }).eq('company_id', c.company_id);
+      }
+    }
     await db.from('activity_log').insert({
       actor: 'SYSTEM:email-verification', action: 'EMAIL_VERIFIED', entity_type: 'contacts',
       entity_id: c.contact_id, company_id: c.company_id,
