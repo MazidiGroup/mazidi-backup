@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { isSignedIn } from '../../lib/adminAuth';
 import { overview } from '../../lib/admin';
+import ReplyRow from './ReplyRow';
 
 export const metadata = { title: 'Dashboard' };
 
@@ -42,13 +43,7 @@ export default async function Admin() {
                   <td className="small">{when(l.submitted_at)}</td>
                 </tr>
               ))}
-              {o.queue.map(r => (
-                <tr key={r.reply_id}>
-                  <td><span className="tag q">{r.classification}</span></td>
-                  <td>{r.company_id ? <Link href={`/admin/companies/${r.company_id}`}>{r.subject || r.from_email}</Link> : (r.subject || r.from_email)}<div className="small">{r.summary}</div></td>
-                  <td className="small">{when(r.received_at)}</td>
-                </tr>
-              ))}
+              {o.queue.map(r => <ReplyRow key={r.reply_id} r={r} when={when(r.received_at)} />)}
             </tbody>
           </table>
         )}

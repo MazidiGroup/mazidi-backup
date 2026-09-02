@@ -145,3 +145,17 @@ export async function reverifyContact(prev, formData) {
   revalidatePath(`/admin/companies/${ct.company_id}`);
   return { ok: `${ct.email} will be re-checked on the next verification run (07:45 weekdays).` };
 }
+
+/** Owner has dealt with a reply (called them, answered, etc). */
+export async function actionReply(prev, formData) {
+  const db = await guard();
+  const id = formData.get('reply_id');
+  const note = String(formData.get('note') || '').trim().slice(0, 1000);
+  const { data: r } = await db.from('replies').select('reply_id, company_id, from_email').eq('reply_id', id).single();
+  if (!r) return { error: 'Reply not found.' };
+  const { error } = await db.from('replies').update({ human_actioned_at: new Date().toISOString() }).eq('reply_id', id);
+  if (error) return { error: error.message };
+  await db.from('activity_log').insert({ actor: ACTOR, action: 'REPLY_ACTIONED', entity_type: 'replies', entity_id: r.reply_id, company_id: r.company_id, detail: { from: r.from_email, note }, outcome: 'handled' });
+  revalidatePath('/admin'); if (r.company_id) revalidatePath(`/admin/companies/${r.company_id}`);
+  return { ok: 'Marked as handled.' };
+}
