@@ -162,8 +162,19 @@ export async function GET(request) {
         continue;
       }
 
-      const site = await findWebsite({ legalName: c.legalName, postcode, hintUrl: places.websiteUri ?? null });
-      const signals = site ? extractSignals(site) : {};
+      let site = await findWebsite({ legalName: c.legalName, postcode, hintUrl: places.websiteUri ?? null });
+      // Google has the business at its registered postcode and lists a website:
+      // a sourced third-party tie between company and site. Accept the site on
+      // that evidence even if the page itself cannot be read (bad certificate,
+      // bot blocking), but take no personalisation from an unread page.
+      let googleWebsite = null;
+      if (places.websiteUri) {
+        try { const u = new URL(places.websiteUri); googleWebsite = { domain: u.hostname.replace(/^www\./, ''), url: u.origin + '/' }; } catch {}
+      }
+      if (!site && googleWebsite && ['postcode', 'both'].includes(places.matchedBy)) {
+        site = { domain: googleWebsite.domain, url: googleWebsite.url, text: '', html: '', confirmedVia: 'google_places_postcode_match' };
+      }
+      const signals = site && site.html ? extractSignals(site) : {};
       if (site) report.websiteFound++;
 
       const sector = sectorFromSic(c.sicCodes);
@@ -203,8 +214,8 @@ export async function GET(request) {
         lead_score_breakdown: scored.breakdown,
         lead_reason: scored.reason,
         research_summary: [
-          site ? `Website confirmed via ${site.confirmedVia}. ${signals.namedPeopleCount ?? 0} people named. Role addresses: ${(signals.roleEmails ?? []).join(', ') || 'none found'}.`
-               : 'No website could be confirmed. Needs a manual look before any contact.',
+          site ? `Website confirmed via ${site.confirmedVia}. ${site.html ? `${signals.namedPeopleCount ?? 0} people named. Role addresses: ${(signals.roleEmails ?? []).join(', ') || 'none found'}.` : 'Page could not be read, so no personalisation facts were taken from it.'}`
+               : `No website could be proven.${googleWebsite ? ` Google lists ${googleWebsite.domain} (unverified: listing matched by name only or page unreadable).` : ''} Needs a manual look before any contact.`,
           `Last confirmation statement made up to ${profile.lastConfirmationMadeUpTo ?? 'none on file'}; last accounts to ${profile.lastAccountsMadeUpTo ?? 'none on file'} (${profile.accountsCategory ?? 'unknown category'}).`,
           places.checked
             ? (places.found ? `Google lists it as ${places.businessStatus ?? 'unknown status'} with ${places.ratingCount} reviews, newest ${places.latestReviewAt ?? 'n/a'} (${places.sourceUrl}).`
