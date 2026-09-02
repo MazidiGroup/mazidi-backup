@@ -1,0 +1,17 @@
+const { mapReoon } = await import('../lib/verify.js');
+let pass = 0, fail = 0;
+const check = (ok, name) => { ok ? pass++ : fail++; console.log(`${ok ? 'PASS' : '*** FAIL ***'}  ${name}`); };
+const m = r => mapReoon(r).result;
+check(m({ status: 'safe', is_deliverable: true }) === 'VALID', 'safe -> VALID');
+check(m({ status: 'role_account', is_deliverable: true, is_catch_all: false }) === 'VALID', 'role address confirmed -> VALID (LIA prefers role inboxes)');
+check(m({ status: 'role_account', is_deliverable: true, is_catch_all: true }) === 'CATCH_ALL', 'role on catch-all domain -> CATCH_ALL');
+check(m({ status: 'role_account', is_deliverable: false }) === 'INVALID', 'role address that does not exist -> INVALID');
+check(m({ status: 'catch_all' }) === 'CATCH_ALL', 'catch_all -> CATCH_ALL');
+check(m({ status: 'invalid' }) === 'INVALID', 'invalid -> INVALID');
+check(m({ status: 'disabled' }) === 'INVALID', 'disabled -> INVALID');
+check(m({ status: 'disposable' }) === 'INVALID', 'disposable -> INVALID');
+check(m({ status: 'spamtrap' }) === 'INVALID', 'spamtrap -> INVALID');
+check(m({ status: 'inbox_full' }) === 'UNKNOWN', 'inbox_full -> UNKNOWN (retried)');
+check(m({ status: 'unknown' }) === 'UNKNOWN', 'unknown -> UNKNOWN (retried)');
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);
