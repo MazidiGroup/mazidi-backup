@@ -1,5 +1,5 @@
 'use client';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { setWebsite, setStatus, addNote, addContact } from '../../actions';
 
 function Msg({ state }) {
@@ -11,6 +11,7 @@ function Msg({ state }) {
 
 export default function CompanyActions({ company }) {
   const [w, wAct, wPend] = useActionState(setWebsite, null);
+  const [url, setUrl] = useState('');
   const [s, sAct, sPend] = useActionState(setStatus, null);
   const [n, nAct, nPend] = useActionState(addNote, null);
   const [c, cAct, cPend] = useActionState(addContact, null);
@@ -22,16 +23,16 @@ export default function CompanyActions({ company }) {
           <input type="hidden" name="company_id" value={company.company_id} />
           <div className="field">
             <label htmlFor="url">Web address</label>
-            <input id="url" name="url" placeholder="www.example.co.uk" required />
-            <p className="hint">Only recorded if the page shows their name or registered postcode.</p>
+            <input id="url" name="url" placeholder="www.example.co.uk" required value={url} onChange={e => setUrl(e.target.value)} />
+            <p className="hint">Recorded automatically if the page shows their name or registered postcode.</p>
           </div>
-          {w?.offerAttest && (
-            <div className="field">
-              <label style={{ fontWeight: 500 }}><input type="checkbox" name="attest" style={{ width: 'auto', marginRight: 8 }} />
-                I've opened this site myself and it is this company's. Record it on my say-so.</label>
-              <p className="hint">Logged under your name. The site won't be read for personalisation.</p>
-            </div>
-          )}
+          <div className="field">
+            <label style={{ fontWeight: 500, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <input type="checkbox" name="attest" style={{ width: 'auto', marginTop: 4 }} />
+              <span>I've opened this site myself and it is this company's. Record it on my say-so if the automatic check can't.</span>
+            </label>
+            <p className="hint">Only used when the check fails. Logged under your name; the site won't be read for personalisation.</p>
+          </div>
           <button className="btn" type="submit" disabled={wPend}>{wPend ? 'Checking…' : 'Check and record'}</button>
           <Msg state={w} />
         </form>
