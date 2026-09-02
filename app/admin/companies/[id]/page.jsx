@@ -11,7 +11,7 @@ const when = iso => new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/Lo
 export default async function Company({ params }) {
   if (!(await isSignedIn())) redirect('/admin/login');
   const { id } = await params;
-  const { company: c, contacts, log } = await companyDetail(id);
+  const { company: c, contacts, log, outreach } = await companyDetail(id);
   if (!c) notFound();
   const b = c.lead_score_breakdown ?? {};
 
@@ -67,6 +67,18 @@ export default async function Company({ params }) {
             ))}
           </tbody>
         </table>
+      )}
+
+      <h2>Emails</h2>
+      {outreach.length === 0 ? <div className="empty">Nothing sent. Outreach {c.pipeline_status === 'QUALIFIED' ? 'will start when the switch is on and the contact is verified' : 'has not reached this company'}.</div> : (
+        <div className="faq">
+          {outreach.map(o => (
+            <details key={o.outreach_id}>
+              <summary>Step {o.sequence_step}: {o.subject} <span className={`tag ${o.delivery_status === 'BOUNCED' || o.delivery_status === 'FAILED' ? 'x' : o.delivery_status === 'CANCELLED' ? 'r' : 'q'}`} style={{ marginLeft: 8 }}>{o.delivery_status}</span> <span className="small">{o.sent_at ? when(o.sent_at) : ''}{o.replied ? ' · replied' : ''}</span></summary>
+              <pre className="notes">{o.body}</pre>
+            </details>
+          ))}
+        </div>
       )}
 
       {c.notes && (<><h2>Notes</h2><pre className="notes">{c.notes}</pre></>)}

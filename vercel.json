@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/verify",
       "schedule": "45 7 * * 1-5"
+    },
+    {
+      "path": "/api/cron/outreach",
+      "schedule": "5 8-16 * * 1-5"
     }
   ]
 }

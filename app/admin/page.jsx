@@ -24,7 +24,7 @@ export default async function Admin() {
         <Link className="stat" href="/admin/companies"><div className="n">{o.total}</div><div className="l">Companies in CRM</div></Link>
         <Link className="stat" href="/admin/companies?view=qualified"><div className="n">{o.qualified}</div><div className="l">Qualified</div></Link>
         <Link className="stat warn" href="/admin/companies?view=review"><div className="n">{o.needsReview}</div><div className="l">Need your review</div></Link>
-        <div className="stat"><div className="n">{o.byStatus.CONTACTED ?? 0}</div><div className="l">In sequence</div></div>
+        <div className="stat"><div className="n">{(o.byStatus.CONTACTED ?? 0) + (o.byStatus.FOLLOW_UP_1 ?? 0) + (o.byStatus.FOLLOW_UP_2 ?? 0) + (o.byStatus.FINAL_FOLLOW_UP ?? 0)}</div><div className="l">In sequence</div></div>
         <div className="stat"><div className="n">{o.byStatus.POSITIVE_REPLY ?? 0}</div><div className="l">Positive replies</div></div>
         <div className="stat"><div className="n">{o.customers}</div><div className="l">Customers</div></div>
       </div>
