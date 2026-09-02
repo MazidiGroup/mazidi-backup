@@ -25,6 +25,13 @@ export default function CompanyActions({ company }) {
             <input id="url" name="url" placeholder="www.example.co.uk" required />
             <p className="hint">Only recorded if the page shows their name or registered postcode.</p>
           </div>
+          {w?.offerAttest && (
+            <div className="field">
+              <label style={{ fontWeight: 500 }}><input type="checkbox" name="attest" style={{ width: 'auto', marginRight: 8 }} />
+                I've opened this site myself and it is this company's. Record it on my say-so.</label>
+              <p className="hint">Logged under your name. The site won't be read for personalisation.</p>
+            </div>
+          )}
           <button className="btn" type="submit" disabled={wPend}>{wPend ? 'Checking…' : 'Check and record'}</button>
           <Msg state={w} />
         </form>

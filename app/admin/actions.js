@@ -32,15 +32,25 @@ export async function setWebsite(prev, formData) {
   const c = await company(db, id);
   if (!url) return { error: 'Enter a web address.' };
 
-  const r = await confirmWebsite({ url, legalName: c.legal_name, postcode: c.postcode });
+  const attest = formData.get('attest') === 'on';
+  let r = await confirmWebsite({ url, legalName: c.legal_name, postcode: c.postcode });
+  if (!r.ok && attest) {
+    // Owner attestation: he has opened the site and confirms it is theirs. The
+    // source is his check, logged under his name. Automated proof is not
+    // available, so no personalisation signals are extracted from it.
+    let parsed; try { parsed = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`); } catch { return { error: 'That is not a valid web address.' }; }
+    r = { ok: true, domain: parsed.hostname.replace(/^www\./, ''), url: parsed.href, text: '', html: '', confirmedVia: 'owner attestation' };
+  }
   if (!r.ok) {
     await log(db, 'WEBSITE_REJECTED', c, { url, why: r.why }, 'not recorded');
-    return { error: r.why };
+    return { error: r.why, offerAttest: Boolean(r.unreachable || r.unproven) };
   }
-  const signals = extractSignals({ text: r.text, html: r.html, domain: r.domain });
+  const signals = r.html ? extractSignals({ text: r.text, html: r.html, domain: r.domain }) : {};
   const { error } = await db.from('companies').update({
     website: r.url, domain: r.domain,
-    research_summary: `Website confirmed by owner via ${r.confirmedVia}. ${signals.namedPeopleCount ?? 0} people named. Role addresses: ${(signals.roleEmails ?? []).join(', ') || 'none found'}.`,
+    research_summary: r.confirmedVia === 'owner attestation'
+      ? 'Website recorded on the owner\'s own check; the site could not be read automatically, so no personalisation facts are taken from it.'
+      : `Website confirmed by owner via ${r.confirmedVia}. ${signals.namedPeopleCount ?? 0} people named. Role addresses: ${(signals.roleEmails ?? []).join(', ') || 'none found'}.`,
     notes: (c.notes || '').replace(/NEEDS_REVIEW: no website confirmed\s*/g, '').trim() || null,
     date_verified: new Date().toISOString()
   }).eq('company_id', id);
