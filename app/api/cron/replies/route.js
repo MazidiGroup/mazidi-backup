@@ -2,6 +2,7 @@ import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import { serverClient } from '../../../../lib/supabase';
 import { classify, ownWords } from '../../../../lib/replies';
+import { processAppReplies } from '../../../../lib/appGrowthReplies';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -22,13 +23,14 @@ export async function GET(request) {
   const auth = authorised(request);
   if (!auth.ok) return Response.json({ error: 'Unauthorised', reason: auth.reason }, { status: 401 });
   const dryRun = new URL(request.url).searchParams.get('dry') === '1';
+  const db = serverClient();
+  const appReplies = await processAppReplies(db, { dryRun });
 
   const host = (process.env.IMAP_HOST || '').trim(), user = (process.env.IMAP_USER || '').trim(), pass = process.env.IMAP_PASSWORD || '';
-  const report = { dryRun, mailbox: host ? 'configured' : 'off (IMAP_* not set)', scanned: 0, matched: 0, recorded: 0, skipped: {}, replies: [], errors: [] };
+  const report = { dryRun, appReplies, mailbox: host ? 'configured' : 'off (IMAP_* not set)', scanned: 0, matched: 0, recorded: 0, skipped: {}, replies: [], errors: [] };
   const skip = why => { report.skipped[why] = (report.skipped[why] ?? 0) + 1; };
   if (!host || !user || !pass) return Response.json(report);
 
-  const db = serverClient();
   // Everyone we have ever emailed, plus their domains, so a reply from a
   // colleague at the same firm is still matched.
   const { data: contacts } = await db.from('contacts').select('contact_id, company_id, email');
@@ -84,7 +86,7 @@ export async function GET(request) {
 
         const { error } = await db.from('replies').insert(row); // trigger replies_halt_sequence does the rest
         if (error) { report.errors.push(`${from}: ${error.message}`); continue; }
-        if (outreachId && cls.classification !== 'OUT_OF_OFFICE') await db.from('outreach').update({ replied: true, replied_at: row.received_at }).eq('outreach_id', outreachId);
+        if (outreachId && cls.classification !== 'OUT_OF_OFFICE') await db.from('outreach').update({ replied: true }).eq('outreach_id', outreachId);
         if (cls.classification === 'BOUNCE' && contact) await db.from('contacts').update({ hard_bounced: true }).eq('contact_id', contact.contact_id);
         await db.from('activity_log').insert({
           actor: 'SYSTEM:reply-processor', action: 'REPLY_RECEIVED', entity_type: 'replies', company_id: companyId,

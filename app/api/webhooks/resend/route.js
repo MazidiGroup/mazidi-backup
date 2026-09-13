@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { serverClient } from '../../../../lib/supabase';
+import { checked } from '../../../../lib/appGrowthServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,15 @@ export async function POST(request) {
   const id = evt?.data?.email_id;
   if (!id) return Response.json({ ok: true, ignored: 'no email id' });
   const db = serverClient();
+  const tags = evt.data?.tags || {};
+  if (tags.app && tags.message) {
+    try {
+      const msg = checked(await db.from('app_growth_messages').select('message_id,app_key').eq('message_id', tags.message).eq('app_key', tags.app).single());
+      checked(await db.rpc('app_growth_delivery_event', { p_message_id: msg.message_id, p_provider_id: id,
+        p_type: String(evt.type || ''), p_event_at: evt.created_at || new Date().toISOString() }));
+      return Response.json({ ok: true });
+    } catch { return Response.json({ error: 'App event not saved; retry required.' }, { status: 503 }); }
+  }
   const { data: row } = await db.from('outreach').select('outreach_id, company_id, contact_id').eq('provider_message_id', id).single();
   if (!row) return Response.json({ ok: true, ignored: 'unknown message' });
 
