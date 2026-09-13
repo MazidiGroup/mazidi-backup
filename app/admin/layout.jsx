@@ -17,10 +17,10 @@ export default async function AdminLayout({ children }) {
     <div className="admin">
       <div className="wrap">
         <nav className="admin-nav">
-          <Link href="/admin">Overview</Link>
+          <Link href="/admin/apps">App campaigns</Link>
           <Link href="/admin/companies?view=review">Needs review</Link>
           <Link href="/admin/companies?view=qualified">Qualified</Link>
-          <Link href="/admin/companies">All companies</Link>
+          <Link href="/admin/companies">Previous business contacts</Link>
           <form action={logout}><button className="linklike" type="submit">Sign out</button></form>
         </nav>
         {children}
